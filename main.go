@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/tls"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -89,7 +88,7 @@ func main() {
 					prettySerial += serial[i-2 : i]
 				}
 			}
-			fmt.Printf("Server subject: %q, serial: %q\n", cert.Subject.CommonName, prettySerial)
+			log.Printf("Server subject: %+v, serial: %q\n", cert.Subject, prettySerial)
 		}
 		return nil
 	}
