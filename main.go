@@ -2,7 +2,8 @@ package main
 
 import (
 	"crypto/tls"
-	"crypto/x509"
+	"encoding/hex"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	vaultapi "github.com/hashicorp/vault/api"
@@ -19,6 +21,7 @@ import (
 var (
 	targetScheme string
 	targetHost   string
+	contextRoot  string
 )
 
 func main() {
@@ -31,6 +34,11 @@ func main() {
 		targetHost = v
 	} else {
 		panic("Must supply targetHost")
+	}
+	if v, ok := os.LookupEnv("contextRoot"); ok {
+		contextRoot = v
+	} else {
+		contextRoot = ""
 	}
 	theURL := &url.URL{
 		Scheme: targetScheme,
@@ -55,35 +63,39 @@ func main() {
 	}
 	log.Println("Read vault token")
 
-	rotater, err := tlsrotater.NewTLSRotater(client, "outproxy")
-	if err != nil {
+	rotater := tlsrotater.NewTLSRotater(client, "outproxy", []string{"localhost"})
+	if err := rotater.Start(); err != nil {
 		panic(err)
 	}
-	rotater.Start()
 	defer rotater.Stop()
-
 	log.Println("Created keypair reloader")
-	certPool := x509.NewCertPool()
-	if !certPool.AppendCertsFromPEM(rotater.CA) {
-		panic("Invalid CA")
-	}
-	log.Println("Loaded CA")
+
 	tlsConfig := tls.Config{
-		RootCAs: certPool,
-		GetClientCertificate: func(requestInfo *tls.CertificateRequestInfo) (*tls.Certificate, error) {
-			// for _, ca := range requestInfo.AcceptableCAs {
-			// 	if bytes.Equal(ca, rotater.CA) {
-			return rotater.GetCertificateFunc()(nil)
-			// 	}
-			// 	fmt.Printf("Unknown CA:\n%v\n", string(ca))
-			// }
-			// return nil, fmt.Errorf("Cannot find our root CA in server's accepted list")
-		},
+		RootCAs:              rotater.CACertPool,
+		ClientCAs:            rotater.CACertPool,
+		GetClientCertificate: rotater.GetClientCertificateFunc(),
 	}
 
 	reverseProxy := httputil.NewSingleHostReverseProxy(theURL)
+	reverseProxy.ModifyResponse = func(response *http.Response) error {
+		for _, cert := range response.TLS.PeerCertificates {
+			var prettySerial string
+			serial := hex.EncodeToString(cert.SerialNumber.Bytes())
+			for i := range serial {
+				if i%2 == 0 && i > 0 {
+					if i > 2 {
+						prettySerial += ":"
+					}
+					prettySerial += serial[i-2 : i]
+				}
+			}
+			fmt.Printf("Server subject: %q, serial: %q\n", cert.Subject.CommonName, prettySerial)
+		}
+		return nil
+	}
 	reverseProxy.Transport = &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
+		Proxy:             http.ProxyFromEnvironment,
+		DisableKeepAlives: true,
 		Dial: (&net.Dialer{
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
@@ -102,6 +114,8 @@ func main() {
 func handler(p *httputil.ReverseProxy) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.Host = targetHost
+		r.URL.Host = targetHost
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, contextRoot)
 		p.ServeHTTP(w, r)
 	}
 }
