@@ -1,7 +1,8 @@
 #!/bin/bash -e
+docker-compose build
 
 docker stack rm stack || true
-# No --detach=false option to docker stack rm yet, so sleep a bit and hope the network and conainers are gone
+echo "No --detach=false option to docker stack rm yet, so sleep a bit and hope the network and conainers are gone"
 sleep 5
 docker volume rm -f stack_vault-data
 docker stack deploy -c docker-compose.yml stack
