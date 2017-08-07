@@ -14,7 +14,7 @@ import (
 	"time"
 
 	vaultapi "github.com/hashicorp/vault/api"
-	"github.com/sirlatrom/tlsrotater"
+	"github.com/sirlatrom/tls-sidecar-playground/tlsrotater"
 )
 
 var (

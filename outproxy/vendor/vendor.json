@@ -153,7 +153,14 @@
 			"revisionTime": "2017-08-03T12:03:42Z"
 		},
 		{
+			"checksumSHA1": "+b98TdVQfKgPV5qsjh9Dh2xHqg8=",
+			"path": "github.com/sirlatrom/tls-sidecar-playground/tlsrotater",
+			"revision": "cf0e09cdc28dc9454c64a1843ee4f4ca8c01e1ed",
+			"revisionTime": "2017-08-07T12:04:52Z"
+		},
+		{
 			"checksumSHA1": "GkIkKbcO+XmgmnzQi0kPjtmBqMI=",
+			"origin": "github.com/sirlatrom/tls-sidecar-playground/outproxy/vendor/github.com/sirlatrom/tlsrotater",
 			"path": "github.com/sirlatrom/tlsrotater",
 			"revision": "5b35b5a8b3297ff80e88f3cf20eb08df6e6f9d3f",
 			"revisionTime": "2017-08-04T13:01:06Z"
@@ -215,5 +222,5 @@
 			"revisionTime": "2017-08-03T12:03:42Z"
 		}
 	],
-	"rootPath": "github.com/sirlatrom/outproxy"
+	"rootPath": "github.com/sirlatrom/tls-sidecar-playground/outproxy"
 }
