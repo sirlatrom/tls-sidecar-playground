@@ -41,7 +41,7 @@ services:
     secrets:
     - vault_token
     deploy:
-      replicas: 3
+      replicas: 0
     stop_signal: KILL
     stop_grace_period: 1s
   dumbserver:
@@ -62,7 +62,7 @@ services:
     secrets:
     - vault_token
     deploy:
-      replicas: 3
+      replicas: 0
     stop_grace_period: 1s
 networks:
   net:
