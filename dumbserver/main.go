@@ -32,6 +32,11 @@ import (
 )
 
 func main() {
+	listenPort := "443"
+	if v, ok := os.LookupEnv("listenPort"); ok {
+		listenPort = v
+	}
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "Hello, %q\n", html.EscapeString(r.URL.Path))
 		for _, cert := range r.TLS.PeerCertificates {
@@ -78,7 +83,7 @@ func main() {
 	}
 	tlsConfig.GetCertificate = rotater.GetCertificateFunc()
 	srv := http.Server{
-		Addr:      ":443",
+		Addr:      ":" + listenPort,
 		TLSConfig: &tlsConfig,
 	}
 	if err := srv.ListenAndServeTLS("", ""); err != nil {
